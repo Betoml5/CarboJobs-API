@@ -7,14 +7,14 @@ const controller = {
       const table = "users";
       await db.query("SELECT * FROM ??", [table], (err, users, fields) => {
         if (err) {
-          res.status(500).send({ message: "Ocurrio un error con la consulta" });
+          return res.status(500).send({ message: "Error with SQL query" });
         }
 
         return res.status(200).send({ users: users });
       });
     } catch (error) {
-      res.status(500).send({
-        message: "Ha ocurrido un error al intentar hacer la consulta!",
+      return res.status(500).send({
+        message: "Server Error",
         error,
       });
     }
@@ -29,18 +29,18 @@ const controller = {
         [table, userID],
         (err, user) => {
           if (err) {
-            res.status(500).send({
-              message: "Ha ocurrido un error al intentar hacer la consulta!",
+            return res.status(500).send({
+              message: "Error with SQL query",
               err,
             });
           }
 
-          res.status(200).send({ user });
+          return res.status(200).send({ user });
         }
       );
     } catch (error) {
-      res.status(500).send({
-        message: "Ha ocurrido un error al intentar hacer la consulta",
+      return res.status(500).send({
+        message: "Server Error",
         error,
       });
     }
@@ -69,21 +69,22 @@ const controller = {
           }
 
           db.query(
-            // Aqui hacemos esto para evitar una inyeccion SQL
+            // Here i use ? to avoid SQL injection.
+            // For tables use  ?? and for data use ?, and pass it as an array
             "INSERT INTO ?? (name, last_name, email, password, phone, nickname) VALUES (?, ?, ?, ?, ?, ?)",
-            [table, name, last_name, email, hash, phone, nickname],
+            [table, name, last_name, email, hash, phone, nickname], // Array with values ?
             (err) => {
               if (err) throw err;
               res
                 .status(200)
-                .send({ message: "Creado correctamente", ok: true });
+                .send({ message: "Created Correctly", ok: true });
             }
           );
         });
       });
     } catch (error) {
       res.status(500).send({
-        message: "Ha ocurrido un error al intentar hacer la consulta",
+        message: "Server Error",
         err,
         ok: false,
       });
@@ -100,7 +101,7 @@ const controller = {
         (err, user) => {
           if (err) {
             res.status(500).send({
-              message: "Ha ocurrido un error al intentar realizar la consulta",
+              message: "Error with SQL query",
               err,
             });
           }
@@ -121,7 +122,7 @@ const controller = {
       );
     } catch (error) {
       res.status(500).send({
-        message: "Ha ocurrido un error en el servidor",
+        message: "Server Error",
         ok: false,
         error,
       });

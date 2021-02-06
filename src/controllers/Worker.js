@@ -1,6 +1,7 @@
 const bcrypt = require("bcrypt");
-
 let table = "workers";
+
+
 
 const db = require("../services/Connection");
 const controller = {
@@ -8,14 +9,14 @@ const controller = {
     try {
       await db.query("SELECT * FROM ??", [table], (err, workers, fields) => {
         if (err) {
-          res.status(500).send({ message: "Ocurrio un error con la consulta" });
+          res.status(500).send({ message: "Error with SQL query" });
         }
 
         return res.status(200).send({ workers: workers });
       });
     } catch (error) {
-      res.status(500).send({
-        message: "Ha ocurrido un error al intentar hacer la consulta!",
+      return res.status(500).send({
+        message: "Server Error",
         error,
       });
     }
@@ -30,18 +31,18 @@ const controller = {
         [table, workerID],
         (err, worker) => {
           if (err) {
-            res.status(500).send({
-              message: "Ha ocurrido un error al intentar hacer la consulta!",
+            return res.status(500).send({
+              message: "Error with SQL query",
               err,
             });
           }
 
-          res.status(200).send({ worker });
+          return res.status(200).send({ worker });
         }
       );
     } catch (error) {
-      res.status(500).send({
-        message: "Ha ocurrido un error al intentar hacer la consulta",
+      return res.status(500).send({
+        message: "Sever Error",
         error,
       });
     }
@@ -65,17 +66,19 @@ const controller = {
             "INSERT INTO ?? (name, last_name, email, password, phone) VALUES (?, ?, ?, ?, ?)",
             [table, name, last_name, email, hash, phone],
             (err, rows) => {
-              if (err) throw err;
-              res
+              if (err) {
+                return res.status(500).send({ message: "Error with SQL query" })
+              };
+              return res
                 .status(201)
-                .send({ message: "Creado correctamente", ok: true, rows });
+                .send({ message: "Created Correctly", ok: true, rows });
             }
           );
         });
       });
     } catch (error) {
-      res.status(500).send({
-        message: "Ha ocurrido un error al intentar hacer la consulta",
+      return res.status(500).send({
+        message: "Server Error",
         err,
         ok: false,
       });
@@ -91,18 +94,18 @@ const controller = {
         [table, email],
         (err, worker) => {
           if (err) {
-            res.status(500).send({
-              message: "Ha ocurrido un error al intentar realizar la consulta",
+            return res.status(500).send({
+              message: "Error with SQL query",
               err,
             });
           }
           if (worker.length === 0) {
-            return res.status(404).send({ message: "worker not found" });
+            return res.status(404).send({ message: "Worker not found", ok: false });
           }
 
           bcrypt.compare(password, worker[0].password, function (err, result) {
             if (err)
-              res.status(500).send({
+              return res.status(500).send({
                 message: "Password or Email not correct",
                 err,
                 ok: false,
@@ -112,8 +115,8 @@ const controller = {
         }
       );
     } catch (error) {
-      res.status(500).send({
-        message: "Ha ocurrido un error en el servidor",
+      return res.status(500).send({
+        message: "Server Error",
         ok: false,
         error,
       });
@@ -130,7 +133,7 @@ const controller = {
 
       bcrypt.genSalt(saltRounds, function (err, salt) {
         if (err)
-          res.status(500).send({ message: "Error trying to update data", err });
+          return res.status(500).send({ message: "Error trying to update data", err });
         bcrypt.hash(password, salt, function (err, hash) {
           if (err) {
             return res
@@ -145,7 +148,7 @@ const controller = {
             (err) => {
               if (err) throw err;
               return res.status(200).send({
-                message: "Actualizado correctamente correctamente",
+                message: "Updated correctly",
                 ok: true,
                 workerID,
               });
@@ -154,17 +157,15 @@ const controller = {
         });
       });
     } catch (error) {
-      console.log(error.name);
       return res
         .status(500)
-        .send({ message: "Ha ocurrido un error en el servidor", error });
+        .send({ message: "Server Error", error });
     }
   },
 
   setRating: async (req, res) => {
     const workerID = req.params.id;
     const { rating } = req.body;
-
     try {
       db.query(
         "UPDATE ?? SET rating = ? WHERE id = ?",
@@ -174,19 +175,19 @@ const controller = {
             return res
               .status(500)
               .send({
-                message: "Ha ocurrido un error al intentar hacer la consulta!",
+                message: "Error with SQL query",
                 err,
               });
           }
           return res
             .status(200)
-            .send({ message: "Actualizado correctamente", workerID });
+            .send({ message: "Updated Correctly", workerID });
         }
       );
     } catch (error) {
       return res
         .status(500)
-        .send({ message: "Ocurrio un error en el servidor", error });
+        .send({ message: "Server error", error });
     }
   },
 
@@ -194,7 +195,7 @@ const controller = {
     // We get the worker name by the request param.
     const workerName = req.params.name; // Check routes file for get more info. /name:? <- this
 
-    if (workerName === undefined) {
+    if (workerName === undefined || "") {
       return res.status(501).send({ message: "Not valid method" });
     }
 
@@ -205,7 +206,7 @@ const controller = {
         (err, worker, fields) => {
           if (err) {
             return res.status(500).send({
-              message: "Ha ocurrido un error al realizar la consulta",
+              message: "Error with SQL query",
               err,
             });
           }
@@ -218,8 +219,8 @@ const controller = {
         }
       );
     } catch (error) {
-      res.status(500).send({
-        message: "Ha ocurrido un error al realizar la consulta",
+      return res.status(500).send({
+        message: "Server Error",
         error,
       });
     }

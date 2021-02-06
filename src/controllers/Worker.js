@@ -64,11 +64,11 @@ const controller = {
             // Aqui hacemos esto para evitar una inyeccion SQL
             "INSERT INTO ?? (name, last_name, email, password, phone) VALUES (?, ?, ?, ?, ?)",
             [table, name, last_name, email, hash, phone],
-            (err) => {
+            (err, rows) => {
               if (err) throw err;
               res
                 .status(201)
-                .send({ message: "Creado correctamente", ok: true });
+                .send({ message: "Creado correctamente", ok: true, rows });
             }
           );
         });
@@ -121,15 +121,72 @@ const controller = {
   },
 
   updateWorker: async (req, res) => {
+    const workerID = req.params.id;
     const { name, last_name, email, password, phone } = req.body;
+    const saltRounds = 10;
 
     try {
-      await db.query(
-        "UPDATE ?? SET name = ? , last_name = ?, email = ?, password = ?, phone = ?"
-      ),
-        [table, name, last_name, email, hash, phone];
+      // Generate the salt for the new password
+
+      bcrypt.genSalt(saltRounds, function (err, salt) {
+        if (err)
+          res.status(500).send({ message: "Error trying to update data", err });
+        bcrypt.hash(password, salt, function (err, hash) {
+          if (err) {
+            return res
+              .status(500)
+              .send({ message: "Error trying to update data", err });
+          }
+
+          db.query(
+            // Aqui hacemos esto para evitar una inyeccion SQL
+            "UPDATE ?? SET name = ? , last_name = ? , email = ?, password = ?, phone = ? WHERE id = ?",
+            [table, name, last_name, email, hash, phone, workerID],
+            (err) => {
+              if (err) throw err;
+              return res.status(200).send({
+                message: "Actualizado correctamente correctamente",
+                ok: true,
+                workerID,
+              });
+            }
+          );
+        });
+      });
     } catch (error) {
-      return res.status(500).send({ message: "Ha ocurrido un error en el servidor" })
+      console.log(error.name);
+      return res
+        .status(500)
+        .send({ message: "Ha ocurrido un error en el servidor", error });
+    }
+  },
+
+  setRating: async (req, res) => {
+    const workerID = req.params.id;
+    const { rating } = req.body;
+
+    try {
+      db.query(
+        "UPDATE ?? SET rating = ? WHERE id = ?",
+        [table, rating, workerID],
+        (err) => {
+          if (err) {
+            return res
+              .status(500)
+              .send({
+                message: "Ha ocurrido un error al intentar hacer la consulta!",
+                err,
+              });
+          }
+          return res
+            .status(200)
+            .send({ message: "Actualizado correctamente", workerID });
+        }
+      );
+    } catch (error) {
+      return res
+        .status(500)
+        .send({ message: "Ocurrio un error en el servidor", error });
     }
   },
 
@@ -147,12 +204,10 @@ const controller = {
         [table, workerName],
         (err, worker, fields) => {
           if (err) {
-            return res
-              .status(500)
-              .send({
-                message: "Ha ocurrido un error al realizar la consulta",
-                err,
-              });
+            return res.status(500).send({
+              message: "Ha ocurrido un error al realizar la consulta",
+              err,
+            });
           }
 
           if (worker.length === 0) {
@@ -163,12 +218,10 @@ const controller = {
         }
       );
     } catch (error) {
-      res
-        .status(500)
-        .send({
-          message: "Ha ocurrido un error al realizar la consulta",
-          error,
-        });
+      res.status(500).send({
+        message: "Ha ocurrido un error al realizar la consulta",
+        error,
+      });
     }
   },
 };

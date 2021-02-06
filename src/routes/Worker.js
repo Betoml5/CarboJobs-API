@@ -9,4 +9,7 @@ router.get('/all', workerController.getWorkers);
 router.get('/:id?', workerController.getWorker);
 router.get('/name/:name?', workerController.getWorkerByName);
 
+router.put('/:id?', workerController.updateWorker)
+router.put('/rating/:id?', workerController.setRating);
+
 module.exports = router;

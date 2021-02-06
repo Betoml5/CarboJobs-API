@@ -1,4 +1,5 @@
 const express = require('express');
+const helment = require('helmet');
 const app = express();
 
 
@@ -6,8 +7,10 @@ const usersRoutes = require('./routes/user')
 const tagRoutes = require('./routes/Tag');
 const workersRoutes = require('./routes/Worker')
 
+
+app.use(helment());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true}));
+app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/users", usersRoutes)
 app.use('/api/tags', tagRoutes)

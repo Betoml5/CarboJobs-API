@@ -1,10 +1,11 @@
 const bcrypt = require("bcrypt");
 
+let table = "workers";
+
 const db = require("../services/Connection");
 const controller = {
   getWorkers: async (req, res) => {
     try {
-      const table = "workers";
       await db.query("SELECT * FROM ??", [table], (err, workers, fields) => {
         if (err) {
           res.status(500).send({ message: "Ocurrio un error con la consulta" });
@@ -22,8 +23,8 @@ const controller = {
 
   getWorker: async (req, res) => {
     const workerID = req.params.id;
+    console.log(req.params);
     try {
-      const table = "workers";
       await db.query(
         "SELECT * FROM ?? WHERE id=?",
         [table, workerID],
@@ -50,7 +51,6 @@ const controller = {
     // Desestructuramos el objeto body
     const { name, last_name, email, password, phone } = req.body;
     try {
-      const table = "workers";
       // Aqui haremos la encriptacion de la contrasena
       const saltRounds = 10;
 
@@ -67,7 +67,7 @@ const controller = {
             (err) => {
               if (err) throw err;
               res
-                .status(200)
+                .status(201)
                 .send({ message: "Creado correctamente", ok: true });
             }
           );
@@ -84,7 +84,7 @@ const controller = {
 
   loginWorker: async (req, res) => {
     const { email, password } = req.body;
-    const table = "workers";
+
     try {
       db.query(
         "SELECT * FROM ?? WHERE email = ?",
@@ -117,6 +117,58 @@ const controller = {
         ok: false,
         error,
       });
+    }
+  },
+
+  updateWorker: async (req, res) => {
+    const { name, last_name, email, password, phone } = req.body;
+
+    try {
+      await db.query(
+        "UPDATE ?? SET name = ? , last_name = ?, email = ?, password = ?, phone = ?"
+      ),
+        [table, name, last_name, email, hash, phone];
+    } catch (error) {
+      return res.status(500).send({ message: "Ha ocurrido un error en el servidor" })
+    }
+  },
+
+  getWorkerByName: async (req, res) => {
+    // We get the worker name by the request param.
+    const workerName = req.params.name; // Check routes file for get more info. /name:? <- this
+
+    if (workerName === undefined) {
+      return res.status(501).send({ message: "Not valid method" });
+    }
+
+    try {
+      await db.query(
+        "SELECT * FROM ?? WHERE name = ?",
+        [table, workerName],
+        (err, worker, fields) => {
+          if (err) {
+            return res
+              .status(500)
+              .send({
+                message: "Ha ocurrido un error al realizar la consulta",
+                err,
+              });
+          }
+
+          if (worker.length === 0) {
+            return res.status(500).send({ message: "User not found" });
+          }
+
+          return res.status(200).send({ worker });
+        }
+      );
+    } catch (error) {
+      res
+        .status(500)
+        .send({
+          message: "Ha ocurrido un error al realizar la consulta",
+          error,
+        });
     }
   },
 };

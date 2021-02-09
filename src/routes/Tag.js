@@ -5,7 +5,7 @@ const tagController = require('../controllers/Tag');
 
 router.post('/create', tagController.createTag);
 
-router.get('/all', tagController.getAllTags);
+router.get('/', tagController.getAllTags);
 router.get('/:id?', tagController.getTag);
 
 module.exports = router;

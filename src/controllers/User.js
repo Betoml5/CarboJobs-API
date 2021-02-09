@@ -1,11 +1,12 @@
 const bcrypt = require("bcrypt");
-
 const db = require("../services/Connection");
+
+let table = "users";
+
 const controller = {
   getUsers: async (req, res) => {
     try {
-      const table = "users";
-      await db.query("SELECT * FROM ??", [table], (err, users, fields) => {
+      db.query("SELECT * FROM ??", [table], (err, users, fields) => {
         if (err) {
           return res.status(500).send({ message: "Error with SQL query" });
         }
@@ -23,21 +24,16 @@ const controller = {
   getUser: async (req, res) => {
     const userID = req.params.id;
     try {
-      const table = "users";
-      await db.query(
-        "SELECT * FROM ?? WHERE id=?",
-        [table, userID],
-        (err, user) => {
-          if (err) {
-            return res.status(500).send({
-              message: "Error with SQL query",
-              err,
-            });
-          }
-
-          return res.status(200).send({ user });
+      db.query("SELECT * FROM ?? WHERE id=?", [table, userID], (err, user) => {
+        if (err) {
+          return res.status(500).send({
+            message: "Error with SQL query",
+            err,
+          });
         }
-      );
+
+        return res.status(200).send({ user });
+      });
     } catch (error) {
       return res.status(500).send({
         message: "Server Error",
@@ -50,16 +46,7 @@ const controller = {
     // Desestructuramos el objeto body
     const { name, last_name, email, password, phone, nickname } = req.body;
     try {
-      const table = "users";
-      const columns = [
-        "name",
-        "last_name",
-        "email",
-        "password",
-        "phone",
-        "nickname",
-      ];
-      // Aqui haremos la encriptacion de la contrasena
+      // Here is the password encrypt
       const saltRounds = 10;
 
       bcrypt.genSalt(saltRounds, function (err, salt) {
@@ -75,9 +62,7 @@ const controller = {
             [table, name, last_name, email, hash, phone, nickname], // Array with values ?
             (err) => {
               if (err) throw err;
-              res
-                .status(200)
-                .send({ message: "Created Correctly", ok: true });
+              res.status(200).send({ message: "Created Correctly", ok: true });
             }
           );
         });
@@ -93,7 +78,7 @@ const controller = {
 
   loginUser: async (req, res) => {
     const { email, password } = req.body;
-    const table = "users";
+
     try {
       db.query(
         "SELECT * FROM ?? WHERE email = ?",
@@ -126,6 +111,46 @@ const controller = {
         ok: false,
         error,
       });
+    }
+  },
+
+  updateUser: async (req, res) => {
+    const userID = req.params.id;
+    const { name, last_name, email, password, phone, nickname } = req.body;
+    const saltRounds = 10;
+
+    try {
+      // Generate the salt for the new password
+
+      bcrypt.genSalt(saltRounds, function (err, salt) {
+        if (err)
+          return res
+            .status(500)
+            .send({ message: "Error trying to update data", err });
+        bcrypt.hash(password, salt, function (err, hash) {
+          if (err) {
+            return res
+              .status(500)
+              .send({ message: "Error trying to update data", err });
+          }
+
+          db.query(
+            // Aqui hacemos esto para evitar una inyeccion SQL
+            "UPDATE ?? SET name = ? , last_name = ? , email = ?, password = ?, phone = ?, nickname = ? WHERE id = ?",
+            [table, name, last_name, email, hash, phone, nickname, userID],
+            (err) => {
+              if (err) throw err;
+              return res.status(200).send({
+                message: "User updated correctly",
+                ok: true,
+                userID,
+              });
+            }
+          );
+        });
+      });
+    } catch (error) {
+      return res.status(500).send({ message: "Server Error", error });
     }
   },
 };

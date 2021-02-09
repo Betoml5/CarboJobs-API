@@ -5,7 +5,7 @@ const controller = {
     const { tag_name } = req.body;
     try {
       const table = "tags";
-      await db.query(
+      db.query(
         "INSERT INTO ?? (tag_name) VALUES (?)",
         [table, tag_name],
         (err) => {
@@ -26,21 +26,17 @@ const controller = {
     const table = "tags";
 
     try {
-      await db.query(
-        "SELECT * FROM ?? WHERE id=?",
-        [table, tagID],
-        (err, tag) => {
-          if (err) {
-            res.status(500).send({
-              message: "Ha ocurrido un error al intentar hacer la consulta!",
-              err,
-              ok: false,
-            });
-          }
-
-          return res.status(200).send({ ...tag, ok: true });
+      db.query("SELECT * FROM ?? WHERE id=?", [table, tagID], (err, tag) => {
+        if (err) {
+          res.status(500).send({
+            message: "Ha ocurrido un error al intentar hacer la consulta!",
+            err,
+            ok: false,
+          });
         }
-      );
+
+        return res.status(200).send({ ...tag, ok: true });
+      });
     } catch (error) {
       res.status(500).send({
         message: "Ha ocurrido un error al intentar hacer la consulta",
@@ -53,7 +49,7 @@ const controller = {
     try {
       const table = "tags";
 
-      await db.query("SELECT * FROM ??", [table], (err, tags, fields) => {
+      db.query("SELECT * FROM ??", [table], (err, tags, fields) => {
         if (err) {
           return res
             .status(500)

@@ -1,6 +1,9 @@
 const mysql = require("mysql");
 const { config } = require("../config");
 
+isDev = config.dev;
+
+
 const connection = mysql.createConnection({
   host: config.dbHost,
   user: config.dbUser,
@@ -8,6 +11,12 @@ const connection = mysql.createConnection({
   database: config.dbName,
 });
 
-connection.connect();
+connection.connect((err) => {
+  if (err) {
+    console.log(err)
+  }
+
+   isDev && console.log(`Connected with DB ${connection.threadId}`)
+})
 
 module.exports = connection;

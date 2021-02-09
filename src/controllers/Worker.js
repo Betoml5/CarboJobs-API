@@ -1,13 +1,11 @@
 const bcrypt = require("bcrypt");
 let table = "workers";
 
-
-
 const db = require("../services/Connection");
 const controller = {
   getWorkers: async (req, res) => {
     try {
-      await db.query("SELECT * FROM ??", [table], (err, workers, fields) => {
+      db.query("SELECT * FROM ??", [table], (err, workers, fields) => {
         if (err) {
           res.status(500).send({ message: "Error with SQL query" });
         }
@@ -26,7 +24,7 @@ const controller = {
     const workerID = req.params.id;
     console.log(req.params);
     try {
-      await db.query(
+      db.query(
         "SELECT * FROM ?? WHERE id=?",
         [table, workerID],
         (err, worker) => {
@@ -67,8 +65,10 @@ const controller = {
             [table, name, last_name, email, hash, phone],
             (err, rows) => {
               if (err) {
-                return res.status(500).send({ message: "Error with SQL query" })
-              };
+                return res
+                  .status(500)
+                  .send({ message: "Error with SQL query" });
+              }
               return res
                 .status(201)
                 .send({ message: "Created Correctly", ok: true, rows });
@@ -100,7 +100,9 @@ const controller = {
             });
           }
           if (worker.length === 0) {
-            return res.status(404).send({ message: "Worker not found", ok: false });
+            return res
+              .status(404)
+              .send({ message: "Worker not found", ok: false });
           }
 
           bcrypt.compare(password, worker[0].password, function (err, result) {
@@ -133,7 +135,9 @@ const controller = {
 
       bcrypt.genSalt(saltRounds, function (err, salt) {
         if (err)
-          return res.status(500).send({ message: "Error trying to update data", err });
+          return res
+            .status(500)
+            .send({ message: "Error trying to update data", err });
         bcrypt.hash(password, salt, function (err, hash) {
           if (err) {
             return res
@@ -148,7 +152,7 @@ const controller = {
             (err) => {
               if (err) throw err;
               return res.status(200).send({
-                message: "Updated correctly",
+                message: "Worker updated correctly",
                 ok: true,
                 workerID,
               });
@@ -157,9 +161,7 @@ const controller = {
         });
       });
     } catch (error) {
-      return res
-        .status(500)
-        .send({ message: "Server Error", error });
+      return res.status(500).send({ message: "Server Error", error });
     }
   },
 
@@ -172,12 +174,10 @@ const controller = {
         [table, rating, workerID],
         (err) => {
           if (err) {
-            return res
-              .status(500)
-              .send({
-                message: "Error with SQL query",
-                err,
-              });
+            return res.status(500).send({
+              message: "Error with SQL query",
+              err,
+            });
           }
           return res
             .status(200)
@@ -185,9 +185,7 @@ const controller = {
         }
       );
     } catch (error) {
-      return res
-        .status(500)
-        .send({ message: "Server error", error });
+      return res.status(500).send({ message: "Server error", error });
     }
   },
 
@@ -200,7 +198,7 @@ const controller = {
     }
 
     try {
-      await db.query(
+      db.query(
         "SELECT * FROM ?? WHERE name = ?",
         [table, workerName],
         (err, worker, fields) => {
@@ -225,6 +223,14 @@ const controller = {
       });
     }
   },
+
+  setTag: async (req, res) => {
+    try {
+      db.query('UPDATE ?? SET tags')
+    } catch (error) {
+      return res.status(500).send({ message:"Server Error", error});
+    }
+  }
 };
 
 module.exports = controller;

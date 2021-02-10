@@ -22,7 +22,7 @@ const controller = {
 
   getWorker: async (req, res) => {
     const workerID = req.params.id;
-    console.log(req.params);
+
     try {
       db.query(
         "SELECT * FROM ?? WHERE id=?",
@@ -71,7 +71,7 @@ const controller = {
               }
               return res
                 .status(201)
-                .send({ message: "Created Correctly", ok: true, rows });
+                .send({ message: "Created Correctly", ok: true });
             }
           );
         });
@@ -226,11 +226,35 @@ const controller = {
 
   setTag: async (req, res) => {
     try {
-      db.query('UPDATE ?? SET tags')
+      db.query("UPDATE ?? SET tags");
     } catch (error) {
-      return res.status(500).send({ message:"Server Error", error});
+      return res.status(500).send({ message: "Server Error", error });
     }
-  }
+  },
+
+  getBestWorkers: async (req, res) => {
+    // I had to parse the request to number. Because i was getting it as a string, and that caused a SQL error.
+    const limit = parseInt(req.params.limit);
+
+    try {
+      db.query(
+        "SELECT name, last_name, rating FROM ?? ORDER BY rating DESC LIMIT ?",
+        [table, limit],
+        (err, workers) => {
+          if (err) {
+            console.log(err);
+            return res
+              .status(500)
+              .send({ message: "Error with SQL query", err });
+          }
+
+          return res.status(200).send({ workers });
+        }
+      );
+    } catch (error) {
+      return res.status(500).send({ message: "Server Error", error });
+    }
+  },
 };
 
 module.exports = controller;

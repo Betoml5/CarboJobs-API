@@ -255,6 +255,36 @@ const controller = {
       return res.status(500).send({ message: "Server Error", error });
     }
   },
+
+  getBestWorkersWithTags: async (req, res) => {
+    // Si esto falla, cambiar por workers.name, y workers.last_name
+    const sql = `
+      SELECT name, last_name, group_concat(tag_name) as 'Tags'
+      FROM tags
+      INNER JOIN workers_tags
+      ON tags.id = workers_tags.tag_id
+      INNER JOIN workers
+      ON workers_tags.worker_id = workers.id
+      GROUP BY worker_id`;
+    try {
+      db.query(
+        {
+          sql,
+          timeout: 40000,
+        },
+        (err, results) => {
+          if (err) {
+            return res
+              .status(500)
+              .send({ message: "Error with SQL query", err });
+          }
+          return res.status(200).send({ results });
+        }
+      );
+    } catch (error) {
+      return res.status(500).send({ message: "Server error" });
+    }
+  },
 };
 
 module.exports = controller;

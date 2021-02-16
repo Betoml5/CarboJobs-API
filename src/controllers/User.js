@@ -1,5 +1,6 @@
 const bcrypt = require("bcrypt");
 const db = require("../services/Connection");
+const passport = require('passport');
 
 let table = "users";
 
@@ -76,42 +77,22 @@ const controller = {
     }
   },
 
-  loginUser: async (req, res) => {
-    const { email, password } = req.body;
+  getUserPassport: async (req, res) => {
+    res.send(req.user);
+  },
 
-    try {
-      db.query(
-        "SELECT * FROM ?? WHERE email = ?",
-        [table, email],
-        (err, user) => {
-          if (err) {
-            res.status(500).send({
-              message: "Error with SQL query",
-              err,
-            });
-          }
-          if (user.length === 0) {
-            return res.status(404).send({ message: "User not found" });
-          }
-
-          bcrypt.compare(password, user[0].password, function (err, result) {
-            if (err)
-              res.status(500).send({
-                message: "Password or Email not correct",
-                err,
-                ok: false,
-              });
-            return res.status(200).send({ result, ok: true, ...user });
-          });
-        }
-      );
-    } catch (error) {
-      res.status(500).send({
-        message: "Server Error",
-        ok: false,
-        error,
-      });
-    }
+  loginUser: async (req, res, next) => {
+    passport.authenticate('local', (err, user, info) => {
+      if (err) throw err;
+      if (!user) res.send('No user exists');
+      else {
+        req.logIn(user, err => {
+          if (err) throw err;
+          res.send('Successfully Auth')
+          console.log(req.user);
+        })
+      }
+    })(req, res, next)
   },
 
   updateUser: async (req, res) => {

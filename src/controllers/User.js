@@ -1,5 +1,7 @@
 const bcrypt = require("bcrypt");
 const db = require("../services/Connection");
+const jwt = require("jsonwebtoken");
+const passport = require("passport");
 
 let table = "users";
 
@@ -113,6 +115,34 @@ const controller = {
       });
     }
   },
+
+  loginUserPassport: async (req, res, next) => {
+    passport.authenticate("login", (err, user, info) => {
+      try {
+        if (err || !user) {
+          const error = new Error("Error in login passport");
+          next(error);
+        }
+
+        req.login(user, { session: false }, async (err) => {
+          const body = { id: user.id, email: user.email };
+          const token = jwt.sign({ user: body }, "secret");
+          return res.json({ token });
+        });
+      } catch (error) {
+        return next(e);
+      }
+    })(req, res, next);
+  },
+
+ getUserByPassport: (req, res) => {
+  res.json({
+    message: "You did it",
+    user: req.user,
+    token: req.query.secret_token
+  })
+ },
+
 
   updateUser: async (req, res) => {
     const userID = req.params.id;

@@ -3,10 +3,12 @@ const helment = require('helmet');
 const cors = require('cors');
 const app = express();
 
+require('./services/auth');
 
 const usersRoutes = require('./routes/user')
 const tagRoutes = require('./routes/Tag');
 const workersRoutes = require('./routes/Worker')
+
 
 app.use(cors());
 app.use(helment());

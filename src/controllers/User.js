@@ -1,6 +1,8 @@
 const bcrypt = require("bcrypt");
 const db = require("../services/Connection");
-
+const jwt = require("jsonwebtoken");
+const passport = require("passport");
+const {config} = require('../config');
 let table = "users";
 
 const controller = {
@@ -32,7 +34,7 @@ const controller = {
           });
         }
 
-        return res.status(200).send({ user });
+        return res.status(200).send(...user);
       });
     } catch (error) {
       return res.status(500).send({
@@ -114,6 +116,30 @@ const controller = {
     }
   },
 
+  loginUserPassport: (req, res, next) => {
+    passport.authenticate("login", (err, user, info) => {
+      try {
+        if (err || !user) {
+          const error = new Error("Error in login passport");
+          next(error);
+        }
+
+        req.login(user, { session: false }, (err) => {
+          // Aqui podemos cambiar los que queramos del usuario.
+          // Si queremos su id, password, se pasa en el payload del token
+          const payload = {
+            id: user.id,
+            name: user.name,
+          };
+          const token = jwt.sign(payload, config.authJwtSecret);
+          return res.status(200).send({ token, payload });
+        });
+      } catch (error) {
+        next(error);
+      }
+    })(req, res, next);
+  },
+
   updateUser: async (req, res) => {
     const userID = req.params.id;
     const { name, last_name, email, password, phone, nickname } = req.body;
@@ -121,7 +147,6 @@ const controller = {
 
     try {
       // Generate the salt for the new password
-
       bcrypt.genSalt(saltRounds, function (err, salt) {
         if (err)
           return res

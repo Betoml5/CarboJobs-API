@@ -12,7 +12,7 @@ passport.use(
       usernameField: "email",
       passwordField: "password",
     },
-    async (email, password, done) => {
+    (email, password, done) => {
       try {
         db.query(
           "SELECT * FROM ?? WHERE email = ?",
@@ -27,7 +27,8 @@ passport.use(
               if (err) throw err;
 
               if (result === true) {
-                return done(null, user);
+                console.log("Logeando usuario... generando token...");
+                return done(null, user[0]);
               } else {
                 return done(null, false);
               }
@@ -45,11 +46,15 @@ passport.use(
   new JWTStrategy(
     {
       secretOrKey: "secret",
-      jwtFromRequest: ExtractJWT.fromUrlQueryParameter("secret_token"),
+      jwtFromRequest: ExtractJWT.fromAuthHeaderAsBearerToken("secret_token"),
     },
-    async (token, done) => {
+    (token, done) => {
       try {
-        return done(null, token.user);
+        if (!token) {
+          return done(null, "Token required");
+        }
+        console.log("VALIDANDO TOKEN...");
+        return done(null, token);
       } catch (e) {
         done(e);
       }

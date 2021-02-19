@@ -34,7 +34,7 @@ const controller = {
           });
         }
 
-        return res.status(200).send({ user });
+        return res.status(200).send( ...user );
       });
     } catch (error) {
       return res.status(500).send({
@@ -116,7 +116,7 @@ const controller = {
     }
   },
 
-  loginUserPassport: async (req, res, next) => {
+  loginUserPassport: (req, res, next) => {
     passport.authenticate("login", (err, user, info) => {
       try {
         if (err || !user) {
@@ -124,25 +124,35 @@ const controller = {
           next(error);
         }
 
-        req.login(user, { session: false }, async (err) => {
-          const body = { id: user.id, email: user.email };
-          const token = jwt.sign({ user: body }, "secret");
-          return res.json({ token });
+        req.login(user, { session: false }, (err) => {
+          // Aqui podemos cambiar los que queramos del usuario.
+          // Si queremos su id, password, se pasa en el payload del token
+          const payload = {
+            id: user.id,
+            name: user.name,
+          };
+          const token = jwt.sign(payload, "secret");
+          return res.status(200).send({ token, payload });
         });
       } catch (error) {
-        return next(e);
+         next(error);
       }
     })(req, res, next);
   },
 
- getUserByPassport: (req, res) => {
-  res.json({
-    message: "You did it",
-    user: req.user,
-    token: req.query.secret_token
-  })
- },
+  // getUserByPassport: async (req, res) => {
+  //   const { user } = req;
 
+  //   try {
+  //     return res.status(200).send({
+  //       message: "You did it siu",
+  //       user,
+  //       // token: req.query.secret_token,
+  //     });
+  //   } catch (error) {
+  //     return res.status(500).send({ message: "Error with Server" });
+  //   }
+  // },
 
   updateUser: async (req, res) => {
     const userID = req.params.id;
@@ -151,7 +161,6 @@ const controller = {
 
     try {
       // Generate the salt for the new password
-
       bcrypt.genSalt(saltRounds, function (err, salt) {
         if (err)
           return res

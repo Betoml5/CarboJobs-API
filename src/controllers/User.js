@@ -34,7 +34,7 @@ const controller = {
           });
         }
 
-        return res.status(200).send( ...user );
+        return res.status(200).send(...user);
       });
     } catch (error) {
       return res.status(500).send({
@@ -135,24 +135,10 @@ const controller = {
           return res.status(200).send({ token, payload });
         });
       } catch (error) {
-         next(error);
+        next(error);
       }
     })(req, res, next);
   },
-
-  // getUserByPassport: async (req, res) => {
-  //   const { user } = req;
-
-  //   try {
-  //     return res.status(200).send({
-  //       message: "You did it siu",
-  //       user,
-  //       // token: req.query.secret_token,
-  //     });
-  //   } catch (error) {
-  //     return res.status(500).send({ message: "Error with Server" });
-  //   }
-  // },
 
   updateUser: async (req, res) => {
     const userID = req.params.id;

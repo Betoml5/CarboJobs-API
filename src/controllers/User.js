@@ -2,7 +2,7 @@ const bcrypt = require("bcrypt");
 const db = require("../services/Connection");
 const jwt = require("jsonwebtoken");
 const passport = require("passport");
-
+const {config} = require('../config');
 let table = "users";
 
 const controller = {
@@ -131,7 +131,7 @@ const controller = {
             id: user.id,
             name: user.name,
           };
-          const token = jwt.sign(payload, "secret");
+          const token = jwt.sign(payload, config.authJwtSecret);
           return res.status(200).send({ token, payload });
         });
       } catch (error) {
